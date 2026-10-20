@@ -148,7 +148,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "app.morphe.manager"
+        applicationId = "app.morphe.manager.lite"
         minSdk = 26
 
         versionName = version.toString()
