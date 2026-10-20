@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import app.morphe.manager.R
-import app.morphe.manager.ui.screen.shared.backgrounds.*
 import app.morphe.manager.ui.theme.SeasonalEvent
 
 /**
@@ -74,98 +72,8 @@ fun AnimatedBackground(
     speedMultiplier: () -> Float = { 1f },
     patchingCompleted: () -> Boolean = { false }
 ) {
-    val effectiveType = if (type == BackgroundType.RANDOM) {
-        resolvedType ?: BackgroundType.CIRCLES
-    } else {
-        type
-    }
-
-    val resolvedSpeed = speedMultiplier()
-    val resolvedPatchingCompleted = patchingCompleted()
-
-    // No background blends across its own layers, so clipping alone is enough. Compositing offscreen
-    // would allocate a full-screen render target and re-composite it every frame for nothing
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .clipToBounds()
-    ) {
-        when (effectiveType) {
-            BackgroundType.CIRCLES -> CirclesBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.RINGS -> RingsBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.MESH -> MeshBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.SPACE -> SpaceBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.SHAPES -> ShapesBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.SNOW -> SnowBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.GRID -> GridBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.PARTICLES -> ParticlesBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.LAVA -> LavaBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.MATRIX -> MatrixBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.HALLOWEEN -> HalloweenBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.FIREWORKS -> FireworksBackground(
-                modifier = Modifier.fillMaxSize(),
-                enableParallax = enableParallax,
-                speedMultiplier = resolvedSpeed,
-                patchingCompleted = resolvedPatchingCompleted
-            )
-            BackgroundType.NONE -> Unit
-            // effectiveType is never RANDOM (resolved above), but the branch is required for exhaustiveness
-            BackgroundType.RANDOM -> Unit
-        }
-    }
+    // MT style: no animated background. Every screen sits on the flat theme
+    // background color, so this draws nothing. The type/picker API stays so
+    // stored preferences and the settings screen keep working unchanged.
+    Box(modifier = Modifier.fillMaxSize())
 }

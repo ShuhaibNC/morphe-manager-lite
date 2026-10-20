@@ -367,7 +367,7 @@ internal fun DynamicAppCard(
                     endConfig = endConfig,
                     modifier = Modifier
                         .matchParentSize()
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(4.dp))
                 )
             }
         ) {
@@ -462,7 +462,7 @@ internal fun HiddenSearchAppCard(
                     endConfig = endConfig,
                     modifier = Modifier
                         .matchParentSize()
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(4.dp))
                 )
             }
         ) {

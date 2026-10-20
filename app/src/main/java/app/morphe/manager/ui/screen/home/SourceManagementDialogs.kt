@@ -487,7 +487,7 @@ private fun LocalTabContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onPickFiles() },
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(4.dp),
                 color = Color.Transparent,
                 border = BorderStroke(
                     1.dp, textColor.copy(alpha = 0.15f)

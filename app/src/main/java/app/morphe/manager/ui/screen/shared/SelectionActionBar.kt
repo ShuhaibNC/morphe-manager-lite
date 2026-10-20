@@ -31,7 +31,7 @@ import app.morphe.manager.R
 import app.morphe.manager.ui.theme.ThemeTraitsDefaults
 
 /** Shape of the [MultiSelectShell] surface: rounded where it leaves the bottom edge, like a sheet. */
-private val ShellShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+private val ShellShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
 
 /**
  * Slide-up surface hosting a selection panel or a reorder bar. It sits on the bottom edge of the

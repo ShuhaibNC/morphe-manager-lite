@@ -47,7 +47,7 @@ object DialogHeaderDefaults {
     val IconSize = 44.dp
 
     /** Rounding that keeps an app icon's own shape at [IconSize]. */
-    val IconCornerRadius = 13.dp
+    val IconCornerRadius = 4.dp
     val IconSpacing = Defaults.ItemSpacing
     val TextSpacing = 2.dp
     val VerticalPadding = Defaults.ContentPadding

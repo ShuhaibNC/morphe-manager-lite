@@ -313,7 +313,7 @@ internal fun HiddenAppsDialog(
                                     endConfig = rememberPatchesSwipeAction(item.packageName),
                                     modifier = Modifier
                                         .matchParentSize()
-                                        .clip(RoundedCornerShape(24.dp))
+                                        .clip(RoundedCornerShape(4.dp))
                                 )
                             }
                         ) {

@@ -50,8 +50,7 @@ object ThemeTraitsDefaults {
      * or the appearance settings leave apps and sources without colors of their own.
      */
     @Composable
-    fun accentColor(base: Color): Color =
-        if (traits.monochrome || !traits.colorAccents) MaterialTheme.colorScheme.primary else base
+    fun accentColor(base: Color): Color = MaterialTheme.colorScheme.primary
 
     @Composable
     fun surfaceColor(base: Color, selected: Boolean = false): Color {
@@ -63,13 +62,11 @@ object ThemeTraitsDefaults {
 
     /** Content paired with a fill [surfaceColor] tinted, or [neutral] where monochrome drops the tint. */
     @Composable
-    fun contentColor(base: Color, neutral: Color): Color = if (traits.monochrome) neutral else base
+    fun contentColor(base: Color, neutral: Color): Color = neutral
 
     /** [base] for a translucent control, or a faint one where monochrome flattens the control. */
     @Composable
     fun borderColor(base: Color, selected: Boolean = false): Color {
-        if (!traits.monochrome) return base
-
         val colors = MaterialTheme.colorScheme
         val edge = if (selected) colors.primary else colors.outlineVariant
         return edge.copy(alpha = if (isDarkTheme()) 0.42f else 0.34f)
@@ -81,25 +78,19 @@ object ThemeTraitsDefaults {
         if (traits.outlines) BorderStroke(width, color) else null
 
     @Composable
-    fun cardElevation(base: Dp): Dp = if (traits.monochrome) 0.dp else base
+    fun cardElevation(base: Dp): Dp = 0.dp
 
     /** Divider between the rows of a card, tinted after the theme unless monochrome keeps it neutral. */
     @Composable
-    fun dividerColor(): Color {
-        val colors = MaterialTheme.colorScheme
-        return if (traits.monochrome) {
-            colors.outlineVariant.copy(alpha = 0.28f)
-        } else {
-            lerp(colors.outlineVariant, colors.surfaceTint, 0.18f).copy(alpha = 0.55f)
-        }
-    }
+    fun dividerColor(): Color =
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
 
     /**
      * Text shadows read as noise on a flat monochrome palette, so drop them
      * when monochrome is active and pass them through otherwise.
      */
     @Composable
-    fun textShadow(base: Shadow): Shadow? = if (traits.monochrome) null else base
+    fun textShadow(base: Shadow): Shadow? = null
 
     /**
      * Solid neutral fill in monochrome mode, gradient fill otherwise. Used by
@@ -107,17 +98,12 @@ object ThemeTraitsDefaults {
      */
     @Composable
     fun iconBackground(gradient: List<Color>): Brush =
-        if (traits.monochrome) {
-            SolidColor(MaterialTheme.colorScheme.primaryContainer)
-        } else {
-            Brush.linearGradient(gradient)
-        }
+        SolidColor(MaterialTheme.colorScheme.surfaceVariant)
 
     /**
      * Paired with [iconBackground], which fills these icons with the primary container. Primary
      * itself sits too close to that fill once a custom accent derives both from one color.
      */
     @Composable
-    fun iconTint(base: Color): Color =
-        if (traits.monochrome) MaterialTheme.colorScheme.onPrimaryContainer else base
+    fun iconTint(base: Color): Color = MaterialTheme.colorScheme.onSurface
 }

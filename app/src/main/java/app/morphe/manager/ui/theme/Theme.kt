@@ -11,7 +11,6 @@
 package app.morphe.manager.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -19,9 +18,10 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowCompat
@@ -98,6 +98,42 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = theme_light_outlineVariant,
     scrim = theme_light_scrim,
 )
+
+
+/**
+ * MT Manager style shapes: almost square. MT uses flat panels and lists, not
+ * rounded Material 3 cards, so every corner in the app is capped at 8.dp and
+ * most sit at 4.dp.
+ */
+val MtShapes = Shapes(
+    extraSmall = RoundedCornerShape(2.dp),
+    small = RoundedCornerShape(4.dp),
+    medium = RoundedCornerShape(4.dp),
+    large = RoundedCornerShape(8.dp),
+    extraLarge = RoundedCornerShape(8.dp)
+)
+
+/** Flat surface ladder in the MT palette: one step per container level, no tint. */
+private fun ColorScheme.withMtContainers(darkTheme: Boolean): ColorScheme =
+    if (darkTheme) copy(
+        surfaceDim = Color(0xFF232323),
+        surfaceBright = Color(0xFF4A4A4A),
+        surfaceContainerLowest = Color(0xFF232323),
+        surfaceContainerLow = Color(0xFF2B2B2B),
+        surfaceContainer = Color(0xFF323232),
+        surfaceContainerHigh = Color(0xFF383838),
+        surfaceContainerHighest = Color(0xFF404040),
+        surfaceTint = primary
+    ) else copy(
+        surfaceDim = Color(0xFFDADADA),
+        surfaceBright = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFFFFFFFF),
+        surfaceContainerLow = Color(0xFFF5F5F5),
+        surfaceContainer = Color(0xFFEEEEEE),
+        surfaceContainerHigh = Color(0xFFE6E6E6),
+        surfaceContainerHighest = Color(0xFFDEDEDE),
+        surfaceTint = primary
+    )
 
 private fun monochromeColorScheme(darkTheme: Boolean): ColorScheme =
     if (darkTheme) {
@@ -188,17 +224,15 @@ fun ManagerTheme(
     appCardColorValues: AppCardColorValues = AppCardColorValues(),
     content: @Composable () -> Unit
 ) {
+    // MT style is one flat palette: no Material You dynamic color, no custom
+    // accent or theme-color washes. The parameters stay in the signature so
+    // callers and stored preferences are untouched, they just no longer
+    // change the look.
     val baseScheme = when {
         traits.monochrome -> monochromeColorScheme(darkTheme)
-
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
-    }.let {
+    }.withMtContainers(darkTheme).let {
         if (darkTheme && pureBlackTheme) {
             val pureBlack = Color.Black
             it.copy(
@@ -209,17 +243,7 @@ fun ManagerTheme(
         } else it
     }
 
-    val schemeWithAccent = accentColorHex.toColorOrNull()?.let {
-        applyCustomAccent(baseScheme, it, darkTheme)
-    } ?: baseScheme
-
-    val finalScheme = if (traits.monochrome) {
-        schemeWithAccent
-    } else {
-        themeColorHex.toColorOrNull()?.let {
-            applyCustomThemeColor(schemeWithAccent, it, darkTheme)
-        } ?: schemeWithAccent
-    }
+    val finalScheme = baseScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -236,24 +260,9 @@ fun ManagerTheme(
 
     // Monochrome cards draw on neutral theme surfaces, so custom card colors never apply there.
     // Remembered because a new resolver instance would invalidate every card that reads it
-    val appCardColorResolver = remember(
-        traits.monochrome,
-        appCardColorMode,
-        accentColorHex,
-        finalScheme.primary,
-        appCardColorValues
-    ) {
-        if (traits.monochrome) {
-            null
-        } else {
-            AppCardColorDefaults.resolver(
-                mode = appCardColorMode,
-                accentHex = accentColorHex.orEmpty(),
-                accentFallback = finalScheme.primary,
-                values = appCardColorValues
-            )
-        }
-    }
+    // MT style: cards are never tinted per app, so there is no card color
+    // resolver. Cards draw on the flat theme surfaces like everything else.
+    val appCardColorResolver = remember { null as AppCardColorResolver? }
 
     CompositionLocalProvider(
         LocalThemeTraits provides traits,
@@ -262,6 +271,7 @@ fun ManagerTheme(
         MaterialTheme(
             colorScheme = finalScheme,
             typography = Typography,
+            shapes = MtShapes,
             content = content
         )
     }

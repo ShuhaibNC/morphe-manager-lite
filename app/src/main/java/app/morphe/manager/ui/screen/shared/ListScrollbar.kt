@@ -439,7 +439,7 @@ private fun AlphabetScrollCallout(
     ) {
         Surface(
             modifier = Modifier.size(AlphabetBubbleWidth, AlphabetBubbleHeight),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(4.dp),
             color = colors.primary,
             contentColor = colors.onPrimary,
             border = CardBorder.of(colors.onPrimary.copy(alpha = 0.2f)),

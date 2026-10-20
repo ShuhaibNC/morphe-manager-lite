@@ -47,11 +47,12 @@ import app.morphe.manager.util.readableOn
 
 // Constants
 object Defaults {
-    val CardElevation = 2.dp
-    val CardCornerRadius = 16.dp
-    val CompactCornerRadius = 12.dp
-    val SettingsCornerRadius = 14.dp
-    val SectionCornerRadius = 18.dp
+    // MT style: flat surfaces, no elevation and almost no rounding.
+    val CardElevation = 0.dp
+    val CardCornerRadius = 4.dp
+    val CompactCornerRadius = 4.dp
+    val SettingsCornerRadius = 4.dp
+    val SectionCornerRadius = 4.dp
 
     /** Gap a surface rising from the bottom edge (a sheet or a panel) keeps from the sides of the screen. */
     val SheetSideInset = 8.dp
@@ -74,8 +75,8 @@ object Defaults {
     /** Pill that carries a label next to its icon. */
     val PillHeightLarge = 40.dp
 
-    /** Fully rounded shape shared by the pill buttons. */
-    val PillShape = RoundedCornerShape(50)
+    /** Shape shared by the pill buttons: a plain slightly-rounded rectangle, like MT. */
+    val PillShape = RoundedCornerShape(4.dp)
 
     /** Height of a glass tab or toggle. Matches [MinTouchTarget]. */
     val GlassButtonHeight = MinTouchTarget
@@ -90,7 +91,7 @@ object Defaults {
     val ContentPadding = 16.dp
     val ContentPaddingMedium = 24.dp
     val ContentPaddingExpanded = 32.dp
-    val ItemSpacing = 12.dp
+    val ItemSpacing = 8.dp
 
     // Animation durations
     /** Duration used for dialog enter/exit and overlay transitions. */
@@ -641,9 +642,11 @@ fun SectionTitle(
         }
         Text(
             text = text,
+            // MT style section header: small, normal weight, in the accent blue,
+            // exactly like MT's Preferences screens ("Startup", "Appearance").
             style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            fontWeight = FontWeight.Normal,
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }

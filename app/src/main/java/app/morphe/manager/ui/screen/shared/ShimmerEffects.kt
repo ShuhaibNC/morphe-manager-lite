@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -51,53 +52,20 @@ internal fun DrawScope.drawDiagonalShimmer(progress: Float, color: Color) {
 @Composable
 fun ShimmerBox(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(8.dp),
+    shape: Shape = RoundedCornerShape(4.dp),
     baseColor: Color = Color.Unspecified,
     shimmerColor: Color = Color.Unspecified,
     baseAlpha: Float = 0.2f
 ) {
+    // MT style: loading placeholders are static flat blocks, no shimmer sweep
+    // and no pulse. The name stays because every loading state calls it.
     val onSurface = MaterialTheme.colorScheme.onSurface
-    val surface = MaterialTheme.colorScheme.surface
     val resolvedBaseColor = if (baseColor == Color.Unspecified) onSurface else baseColor
-    // The shimmer band must be lighter than the base. In dark theme onSurface is light so it works
-    // directly; in light theme surface is lighter, so use it instead to produce a bright glint
-    val resolvedShimmerColor = if (shimmerColor == Color.Unspecified) {
-        if (surface.luminance() > onSurface.luminance()) surface.copy(alpha = 0.7f)
-        else onSurface.copy(alpha = 0.35f)
-    } else shimmerColor
-
-    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
-
-    // State<Float> (not `by`) so .value in drawBehind is a draw-phase observation - only the draw
-    // lambda re-runs per frame. initialValue=0.5 keeps the band on-screen from frame 1
-    val shimmerProgressState: State<Float> = infiniteTransition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 1.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_progress"
-    )
-    val pulseAlphaState: State<Float> = infiniteTransition.animateFloat(
-        initialValue = baseAlpha,
-        targetValue = baseAlpha + 0.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse_alpha"
-    )
 
     Box(
         modifier = modifier
             .clip(shape)
-            .drawBehind {
-                val progress = shimmerProgressState.value % 1f
-                val alpha = pulseAlphaState.value
-                drawRect(color = resolvedBaseColor.copy(alpha = alpha))
-                drawDiagonalShimmer(progress, resolvedShimmerColor)
-            }
+            .background(resolvedBaseColor.copy(alpha = baseAlpha))
     )
 }
 
@@ -165,7 +133,7 @@ fun ShimmerApkItem() {
                         modifier = Modifier
                             .width(72.dp)
                             .height(36.dp),
-                        shape = RoundedCornerShape(50)
+                        shape = RoundedCornerShape(4.dp)
                     )
                 }
             }
@@ -181,7 +149,7 @@ fun ShimmerApkItem() {
 fun ShimmerBundleRow() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(4.dp),
         color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
         border = CardBorder.of(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
@@ -203,7 +171,7 @@ fun ShimmerBundleRow() {
                     modifier = Modifier
                         .fillMaxWidth(0.3f)
                         .height(24.dp),
-                    shape = RoundedCornerShape(50)
+                    shape = RoundedCornerShape(4.dp)
                 )
             }
         }

@@ -260,7 +260,7 @@ private fun OnboardingCard(
     // Drawn and headed like a selection panel, the other surface that floats over the home screen
     Surface(
         modifier = modifier.widthIn(max = 380.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(8.dp),
         color = ThemeTraitsDefaults.surfaceColor(MaterialTheme.colorScheme.background),
         shadowElevation = 8.dp,
         border = CardBorder.neutral

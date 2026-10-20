@@ -344,7 +344,7 @@ fun UnusableOptionPathsDialog(
 
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RoundedCornerShape(4.dp),
                             color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
                             tonalElevation = 1.dp,
                             border = CardBorder.tinted(MaterialTheme.colorScheme.error)

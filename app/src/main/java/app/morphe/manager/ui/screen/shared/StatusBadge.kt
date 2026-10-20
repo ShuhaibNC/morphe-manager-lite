@@ -155,7 +155,7 @@ fun StatusBadge(
                 enabled = onClick != null,
                 label = "status_badge_press_scale"
             )
-            .clip(RoundedCornerShape(percent = 50))
+            .clip(RoundedCornerShape(2.dp))
             .background(fill)
             .then(
                 if (onClick != null) {

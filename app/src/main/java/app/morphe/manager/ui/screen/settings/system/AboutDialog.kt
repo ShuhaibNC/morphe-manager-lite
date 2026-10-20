@@ -126,7 +126,7 @@ fun AboutDialog(
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .background(neutralVeil(dialogTextColor()), RoundedCornerShape(24.dp)),
+                    .background(neutralVeil(dialogTextColor()), RoundedCornerShape(4.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 val icon = rememberDrawablePainter(
@@ -139,7 +139,7 @@ fun AboutDialog(
                     contentDescription = null,
                     modifier = Modifier
                         .size(80.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(4.dp))
                 )
             }
 

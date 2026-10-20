@@ -42,15 +42,9 @@ object GlassButtonDefaults {
 
     /** Glass fill tinted by [base], for accents outside the selected/unselected pair. */
     @Composable
-    fun containerColor(base: Color, selected: Boolean): Color {
-        val isDark = isDarkTheme()
-        val alpha = if (selected) {
-            if (isDark) 0.55f else 0.72f
-        } else {
-            if (isDark) 0.35f else 0.6f
-        }
-        return ThemeTraitsDefaults.surfaceColor(base = base.copy(alpha = alpha), selected = selected)
-    }
+    fun containerColor(base: Color, selected: Boolean): Color =
+        // MT style: solid flat fill, no translucent glass tint.
+        ThemeTraitsDefaults.surfaceColor(base = base, selected = selected)
 
     @Composable
     fun contentColor(selected: Boolean = false): Color =

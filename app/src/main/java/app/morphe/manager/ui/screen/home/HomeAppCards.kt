@@ -72,10 +72,10 @@ private data class HomeAppCardStyle(
     val chipContainerColor: Color,
     val chipContentColor: Color,
     val cardColor: Color,
-    val cardRadius: Dp = 24.dp,
-    val cardHeight: Dp = 80.dp,
-    val contentPadding: Dp = 16.dp,
-    val contentSpacing: Dp = 16.dp
+    val cardRadius: Dp = 4.dp,
+    val cardHeight: Dp = 72.dp,
+    val contentPadding: Dp = 12.dp,
+    val contentSpacing: Dp = 12.dp
 ) {
     /**
      * Applies the card colors chosen in the appearance settings to [bundleColors], the palette
@@ -90,68 +90,25 @@ private data class HomeAppCardStyle(
      * declares for itself, but the appearance settings let a card be any color, including one
      * light enough to swallow it.
      */
-    fun onCard(bundleColors: List<Color>): HomeAppCardStyle {
-        if (monochrome) return this
-
-        val fill = cardColors(bundleColors).blend()
-        if (fill.requiresLightContent()) return this
-
-        return copy(
-            titleColor = Color.Black,
-            subtitleColor = Color.Black.copy(alpha = subtitleColor.alpha),
-            chipContainerColor = Color.Black.copy(alpha = chipContainerColor.alpha),
-            chipContentColor = Color.Black
-        )
-    }
+    fun onCard(bundleColors: List<Color>): HomeAppCardStyle = this
 }
 
 @Composable
 private fun homeAppCardStyle(subtitleAlpha: Float = 0.75f): HomeAppCardStyle {
-    // The cards draw a palette of their own rather than shared tokens, so they read the traits directly
-    val traits = LocalThemeTraits.current
-    val monochrome = traits.monochrome
-    val titleShadow = ThemeTraitsDefaults.textShadow(
-        Shadow(
-            color = Color.Black.copy(alpha = 0.4f),
-            offset = Offset(0f, 2f),
-            blurRadius = 4f
-        )
-    )
-    val subtitleShadow = ThemeTraitsDefaults.textShadow(
-        Shadow(
-            color = Color.Black.copy(alpha = 0.4f),
-            offset = Offset(0f, 1f),
-            blurRadius = 2f
-        )
-    )
-
+    // MT style row: a plain list item on the flat background. White/gray theme
+    // text, no shadows, no per-app colors, icon in a simple square slot.
     return HomeAppCardStyle(
-        monochrome = monochrome,
-        outlines = traits.outlines,
-        colorResolver = LocalAppCardColorResolver.current,
-        iconSize = 60.dp,
-        titleColor = if (monochrome) MaterialTheme.colorScheme.onSurface else Color.White,
-        subtitleColor = if (monochrome) {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        } else {
-            Color.White.copy(alpha = subtitleAlpha)
-        },
-        titleStyle = MaterialTheme.typography.titleLarge.copy(
-            fontWeight = FontWeight.Bold,
-            shadow = titleShadow
-        ),
-        subtitleStyle = MaterialTheme.typography.bodyMedium.copy(shadow = subtitleShadow),
-        chipContainerColor = if (monochrome) {
-            MaterialTheme.colorScheme.surfaceContainerHighest
-        } else {
-            Color.White.copy(alpha = 0.20f)
-        },
-        chipContentColor = if (monochrome) {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        } else {
-            Color.White
-        },
-        cardColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        monochrome = LocalThemeTraits.current.monochrome,
+        outlines = LocalThemeTraits.current.outlines,
+        colorResolver = null,
+        iconSize = 48.dp,
+        titleColor = MaterialTheme.colorScheme.onSurface,
+        subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
+        titleStyle = MaterialTheme.typography.titleMedium,
+        subtitleStyle = MaterialTheme.typography.bodySmall,
+        chipContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        chipContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        cardColor = MaterialTheme.colorScheme.surface
     )
 }
 
@@ -416,8 +373,7 @@ private fun InstalledAppCard(
                 // The drag handle rides over this edge of the card while reordering, so the
                 // badges pinned here stand down rather than crowd it
                 if (showStatusBadges) {
-                    // Frosted-glass colors: a white semi-transparent fill reads on any accent
-                    // color the card's bundle brings, and on the user's dynamic theme
+                    // Flat chip colors from the theme, like every other row.
                     if (item.isDeleted && !item.isInstallStateNotPatched) {
                         StatusBadge(
                             text = deletedLabel,
@@ -518,11 +474,10 @@ private fun NotPatchedAppCard(
 }
 
 /**
- * Shared content layout for app cards and buttons.
+ * Shared content layout for app rows and buttons.
  *
- * Uses a frosted glass effect built from two passes:
- * - a diagonal sweep carrying the card colors from the bottom-start tint to the top-end accent
- * - a gradient border
+ * MT style: a flat row on the theme surface, 4.dp corners, no gradient,
+ * no border sweep, no press animation.
  */
 @Composable
 internal fun AppCardLayout(
@@ -541,88 +496,15 @@ internal fun AppCardLayout(
     val longClickLabel = stringResource(R.string.accessibility_select_app)
         .takeIf { onLongClick != null }
 
-    val colors = cardStyle.cardColors(gradientColors)
-    val baseColor = colors.firstOrNull() ?: Color.White
-    val midColor = colors.getOrElse(1) { baseColor }
-    val endColor = colors.lastOrNull() ?: baseColor
-
-    // Press scale animation
+    // Press scale animation removed: MT rows do not move, they just click.
     val interactionSource = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(cardStyle.cardHeight)
-            .pressScale(
-                interactionSource = interactionSource,
-                label = "card_press_scale"
-            )
             .clip(shape)
-            // Brushes are rebuilt only when the size or the palette changes, so scrolling a list
-            // of cards does not reallocate them on every frame
-            .drawWithCache {
-                val w  = size.width
-                val h  = size.height
-                val cr = CornerRadius(cardStyle.cardRadius.toPx())
-                val rtl = layoutDirection.isRtl
-
-                if (cardStyle.monochrome) {
-                    return@drawWithCache onDrawWithContent {
-                        drawRoundRect(
-                            color = cardStyle.cardColor,
-                            cornerRadius = cr
-                        )
-
-                        drawContent()
-                    }
-                }
-
-                // One sweep from the bottom-start tint through to the top-end accent. Every
-                // translucent layer costs the GPU a full blend pass over the card, and a list of
-                // them scrolling is what pushed the frame past its budget
-                val glass = Brush.linearGradient(
-                    colors = listOf(
-                        baseColor.copy(alpha = 0.70f),
-                        midColor.copy(alpha = 0.58f),
-                        endColor.copy(alpha = 0.64f)
-                    ),
-                    start = Offset(startEdgeX(w, rtl), h),
-                    end   = Offset(endEdgeX(w, rtl), 0f)
-                )
-
-                // Border: bright top-start → faded bottom-end. The highlight borrows its middle from
-                // the card colors, which on a single dark color fades into the background and leaves
-                // only the corners lit, so a flat card gets an even edge instead
-                val border = if (colors.all { it == baseColor }) {
-                    SolidColor(cardStyle.titleColor.copy(alpha = 0.30f))
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.65f),
-                            midColor.copy(alpha = 0.30f),
-                            endColor.copy(alpha = 0.15f),
-                            Color.White.copy(alpha = 0.20f)
-                        ),
-                        start = Offset(startEdgeX(w, rtl), 0f),
-                        end   = Offset(endEdgeX(w, rtl), h)
-                    )
-                }
-                val borderStroke = Stroke(width = 1.5.dp.toPx())
-
-                onDrawWithContent {
-                    drawRoundRect(brush = glass, cornerRadius = cr)
-
-                    drawContent()
-
-                    if (cardStyle.outlines) {
-                        drawRoundRect(
-                            brush = border,
-                            cornerRadius = cr,
-                            style = borderStroke
-                        )
-                    }
-                }
-            }
+            .background(cardStyle.cardColor, shape)
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -658,81 +540,19 @@ fun AppLoadingCard(
     gradientColors: List<Color>,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
-
-    // Pulse animation for gradient background
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse_alpha"
-    )
-
-    // Shimmer animation
-    val shimmerOffset by infiniteTransition.animateFloat(
-        initialValue = -1f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_offset"
-    )
-
+    // MT style: a static flat skeleton row, no pulse and no shimmer sweep.
     val cardStyle = homeAppCardStyle().onCard(gradientColors)
     val shape = RoundedCornerShape(cardStyle.cardRadius)
-    val rtl = isRtl()
-
-    // Skeleton rows carry the height of the text they stand in for, so the card does not
-    // re-lay-out its content the moment the real app resolves
     val titleRowHeight = with(LocalDensity.current) { cardStyle.titleStyle.lineHeight.toDp() }
-
-    // Follows the content the card settled on, so the skeleton stays visible on a light gradient
     val skeletonColor = cardStyle.titleColor
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(cardStyle.cardHeight)
+            .clip(shape)
+            .background(cardStyle.cardColor)
     ) {
-        // Base gradient background
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(shape)
-                .then(
-                    if (cardStyle.monochrome) {
-                        Modifier.background(cardStyle.cardColor)
-                    } else {
-                        Modifier.background(
-                            brush = Brush.linearGradient(
-                                colors = cardStyle.cardColors(gradientColors)
-                                    .map { it.copy(alpha = pulseAlpha) },
-                                start = Offset(startEdgeX(1000f, rtl), 0f),
-                                end = Offset(endEdgeX(1000f, rtl), 0f)
-                            )
-                        )
-                    }
-                )
-        )
-
-        // Shimmer overlay
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(shape)
-                .drawBehind {
-                    drawDiagonalShimmer(
-                        progress = (shimmerOffset + 1f) / 3f,
-                        color = skeletonColor.copy(alpha = 0.3f)
-                    )
-                }
-        )
-
-        // Content skeleton
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -740,7 +560,6 @@ fun AppLoadingCard(
             horizontalArrangement = Arrangement.spacedBy(cardStyle.contentSpacing),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon skeleton, sized and shaped like the glass placeholder
             ShimmerBox(
                 modifier = Modifier
                     .size(cardStyle.iconSize)
@@ -750,7 +569,6 @@ fun AppLoadingCard(
                 baseColor = skeletonColor.copy(alpha = 0.2f)
             )
 
-            // Text skeleton
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)

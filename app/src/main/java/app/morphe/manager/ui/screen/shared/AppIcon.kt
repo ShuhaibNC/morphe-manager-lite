@@ -223,51 +223,20 @@ private fun GlassPlaceholderIcon(
     gradientColors: List<Color>,
     modifier: Modifier = Modifier
 ) {
-    val baseColor = gradientColors.firstOrNull() ?: Color.White
-    val midColor = gradientColors.getOrElse(1) { baseColor }
-    val endColor = gradientColors.lastOrNull() ?: baseColor
-    val rtl = isRtl()
+    // MT style placeholder: a flat black square (dark theme) with a thin
+    // outline, like MT's file icons. No glass gradient, no per-app colors.
+    val fill = MaterialTheme.colorScheme.surfaceVariant
+    val outlineColor = MaterialTheme.colorScheme.outlineVariant
 
     Box(
         modifier = modifier
             .wrapContentSize()
             .fillMaxSize(AppIconContentFraction)
-            // Brushes are rebuilt only when the size or the palette changes, so a list full of
-            // placeholders does not reallocate them on every frame
             .drawWithCache {
                 val outline = AppIconShape.createOutline(size, layoutDirection, this)
-                val w = size.width
-                val h = size.height
-                val startX = startEdgeX(w, rtl)
-                val endX = endEdgeX(w, rtl)
-
-                // One sweep from the frosted top-start highlight into the tinted bottom-end. Every
-                // translucent layer is another blend pass, paid once per placeholder on screen
-                val glass = Brush.linearGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.50f),
-                        baseColor.copy(alpha = 0.22f),
-                        endColor.copy(alpha = 0.20f)
-                    ),
-                    start = Offset(startX, 0f),
-                    end = Offset(endX, h)
-                )
-
-                // Border
-                val border = Brush.linearGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.55f),
-                        midColor.copy(alpha = 0.30f),
-                        Color.White.copy(alpha = 0.35f)
-                    ),
-                    start = Offset(startX, 0f),
-                    end = Offset(endX, h)
-                )
-                val borderStroke = Stroke(width = 1.dp.toPx())
-
                 onDrawBehind {
-                    drawOutline(outline, brush = glass)
-                    drawOutline(outline, brush = border, style = borderStroke)
+                    drawOutline(outline, color = fill)
+                    drawOutline(outline, color = outlineColor, style = Stroke(width = 1.dp.toPx()))
                 }
             }
     )

@@ -55,12 +55,9 @@ fun Modifier.pressScale(
     pressedScale: Float = PressedScale,
     label: String = "press_scale"
 ): Modifier {
-    val scale = rememberPressScale(interactionSource, enabled, pressedScale, label)
-
-    return graphicsLayer {
-        scaleX = scale.value
-        scaleY = scale.value
-    }
+    // MT style: controls do not sink or scale when pressed. Kept as a no-op
+    // so every caller keeps working without the animation.
+    return this
 }
 
 /**

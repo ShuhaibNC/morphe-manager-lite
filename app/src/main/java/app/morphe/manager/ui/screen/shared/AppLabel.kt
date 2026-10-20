@@ -144,7 +144,7 @@ private fun SimpleAppLabel(
                 // A pill stands in for the text until the real label arrives
                 if (label == null) {
                     Modifier
-                        .background(MaterialTheme.colorScheme.inverseOnSurface, RoundedCornerShape(100))
+                        .background(MaterialTheme.colorScheme.inverseOnSurface, RoundedCornerShape(4.dp))
                         .drawWithContent {}
                 } else {
                     Modifier

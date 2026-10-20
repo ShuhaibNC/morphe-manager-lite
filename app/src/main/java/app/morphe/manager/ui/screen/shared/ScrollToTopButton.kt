@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Icon
@@ -131,7 +132,7 @@ private fun ScrollToTopButtonImpl(
         // Nearly opaque rather than glass, since it floats over rows of text
         Surface(
             onClick = rememberHapticClick(onClick),
-            shape = CircleShape,
+            shape = RoundedCornerShape(4.dp), // MT style: square button, not a round FAB
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
             contentColor = MaterialTheme.colorScheme.onSurface,
             // Edged in the dialog's color, as its outlined buttons are

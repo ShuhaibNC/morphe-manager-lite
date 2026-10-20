@@ -414,7 +414,7 @@ private fun AdaptiveContent(
                                 .fillMaxWidth()
                                 .then(trackContentBottom)
                                 .then(modeSwipe),
-                            verticalArrangement = if (isGroupedAppView) Arrangement.Top else Arrangement.Center,
+                            verticalArrangement = Arrangement.Top, // MT style: list starts at the top, never centered
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             if (!greetingMessage.isNullOrEmpty()) {
@@ -460,7 +460,7 @@ private fun AdaptiveContent(
                     .fillMaxWidth()
                     .then(trackContentBottom)
                     .then(modeSwipe),
-                verticalArrangement = if (isGroupedAppView) Arrangement.Top else Arrangement.Center
+                verticalArrangement = Arrangement.Top // MT style: list starts at the top, never centered
             ) {
                 // Section 2: Greeting - when disabled, show a small top spacer so
                 // the app cards don't sit flush against the top of the screen
@@ -608,11 +608,11 @@ fun GreetingSection(
         ) { targetMessage ->
             Text(
                 text = targetMessage,
-                // Sized as a dialog title, so the home screen heads itself the way its dialogs do
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground,
+                // MT style: a plain section line, left aligned, normal weight.
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Start,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth()
             )
         }
