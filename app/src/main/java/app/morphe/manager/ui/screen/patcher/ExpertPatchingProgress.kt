@@ -1110,3 +1110,10 @@ private fun LiveIndicatorDot(color: Color, size: Dp) {
             }
     )
 }
+
+/** Formats a KB/s rate for the run summary, MB/s once it is big enough to read that way. */
+internal fun formatRate(kbPerSec: Int) = if (kbPerSec >= 1024) {
+    "%.1f MB/s".format(kbPerSec / 1024f)
+} else {
+    "$kbPerSec KB/s"
+}
