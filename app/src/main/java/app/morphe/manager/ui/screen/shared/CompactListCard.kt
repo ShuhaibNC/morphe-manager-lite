@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -19,15 +18,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /** Size of the picture leading a [CompactListCard]. */
-val CompactCardIconSize = 36.dp
+val CompactCardIconSize = 52.dp
 
 /** Size of a glyph drawn on a [CompactCardIconTile]. */
 val CompactCardGlyphSize = 20.dp
 
 /** Gap between the [CompactListCard]s of a list. */
-val CompactCardSpacing = 6.dp
+val CompactCardSpacing = 8.dp
 
-private val CompactCardPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+private val CompactCardPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
 
 /**
  * Card of a long list to pick one entry from, the one patch cards sit on, laying out a picture
@@ -43,9 +42,9 @@ fun CompactListCard(
 ) {
     SettingsItemCard(
         onClick = onClick,
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-        showBorder = true,
-        borderColor = MaterialTheme.colorScheme.outlineVariant,
+        // MT Extract APK style: a flat panel lighter than the page, no border.
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        showBorder = false,
         modifier = modifier
     ) {
         Row(

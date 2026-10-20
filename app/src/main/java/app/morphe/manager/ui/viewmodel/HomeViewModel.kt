@@ -118,7 +118,9 @@ data class InstalledAppPickerItem(
     val label: String,
     val packageInfo: PackageInfo,
     val isSystemApp: Boolean,
-    val info: InstalledApkInfo
+    val info: InstalledApkInfo,
+    /** Base APK plus splits, as MT's app list prints the size beside the version. */
+    val sizeBytes: Long = 0
 )
 
 /**
@@ -1560,6 +1562,8 @@ class HomeViewModel(
                                     label = label,
                                     packageInfo = pkgInfo,
                                     isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+                                    sizeBytes = File(sourceDir).length() +
+                                            splitPaths.sumOf { File(it).length() },
                                     info = InstalledApkInfo(
                                         version = version,
                                         versionCode = pm.getVersionCode(pkgInfo),

@@ -34,7 +34,7 @@ enum class BackgroundType(val displayNameResId: Int) {
     RANDOM(R.string.settings_appearance_background_random);
 
     companion object {
-        val DEFAULT = CIRCLES
+        val DEFAULT = NONE
 
         /** Types the picker keeps out of sight until they are unlocked. */
         val HIDDEN: Set<BackgroundType> = setOf(MATRIX)

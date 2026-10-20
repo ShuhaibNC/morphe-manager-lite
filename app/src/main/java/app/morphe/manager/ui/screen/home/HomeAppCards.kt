@@ -6,6 +6,7 @@
 package app.morphe.manager.ui.screen.home
 
 import android.content.pm.PackageInfo
+import android.text.format.Formatter
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -72,10 +74,10 @@ private data class HomeAppCardStyle(
     val chipContainerColor: Color,
     val chipContentColor: Color,
     val cardColor: Color,
-    val cardRadius: Dp = 4.dp,
-    val cardHeight: Dp = 72.dp,
-    val contentPadding: Dp = 12.dp,
-    val contentSpacing: Dp = 12.dp
+    val cardRadius: Dp = 8.dp,
+    val cardHeight: Dp = 88.dp,
+    val contentPadding: Dp = 14.dp,
+    val contentSpacing: Dp = 14.dp
 ) {
     /**
      * Applies the card colors chosen in the appearance settings to [bundleColors], the palette
@@ -95,20 +97,21 @@ private data class HomeAppCardStyle(
 
 @Composable
 private fun homeAppCardStyle(subtitleAlpha: Float = 0.75f): HomeAppCardStyle {
-    // MT style row: a plain list item on the flat background. White/gray theme
-    // text, no shadows, no per-app colors, icon in a simple square slot.
+    // MT Extract APK style row: a flat panel lighter than the page behind it,
+    // big icon on the left, name over version/size over package name. No shadows,
+    // no per-app colors.
     return HomeAppCardStyle(
         monochrome = LocalThemeTraits.current.monochrome,
         outlines = LocalThemeTraits.current.outlines,
         colorResolver = null,
-        iconSize = 48.dp,
+        iconSize = 56.dp,
         titleColor = MaterialTheme.colorScheme.onSurface,
         subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
-        titleStyle = MaterialTheme.typography.titleMedium,
-        subtitleStyle = MaterialTheme.typography.bodySmall,
+        titleStyle = MaterialTheme.typography.titleLarge,
+        subtitleStyle = MaterialTheme.typography.bodyMedium,
         chipContainerColor = MaterialTheme.colorScheme.surfaceVariant,
         chipContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        cardColor = MaterialTheme.colorScheme.surface
+        cardColor = MaterialTheme.colorScheme.surfaceContainerHigh
     )
 }
 
@@ -129,7 +132,8 @@ internal fun RowScope.AppCardContent(
     packageInfo: PackageInfo?,
     displayName: String,
     subtitle: String?,
-    gradientColors: List<Color>
+    gradientColors: List<Color>,
+    thirdLine: String? = null
 ) {
     val cardStyle = homeAppCardStyle().onCard(gradientColors)
 
@@ -144,7 +148,7 @@ internal fun RowScope.AppCardContent(
 
     Column(
         modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
             text = displayName,
@@ -157,14 +161,29 @@ internal fun RowScope.AppCardContent(
         if (subtitle != null) {
             Text(
                 // Matches the badge-height subtitle row of the installed cards, so names line up
-                // across every card in the list
-                modifier = Modifier
-                    .height(statusBadgeHeight)
-                    .wrapContentHeight(Alignment.CenterVertically),
+                // across every card in the list. A card carrying a third line gives the height
+                // back, its three lines already fill the row like MT's app list
+                modifier = if (thirdLine == null) {
+                    Modifier
+                        .height(statusBadgeHeight)
+                        .wrapContentHeight(Alignment.CenterVertically)
+                } else {
+                    Modifier
+                },
                 text = subtitle,
                 style = cardStyle.subtitleStyle,
                 color = cardStyle.subtitleColor,
                 // The row is one badge tall, so a subtitle that wraps would be cut in half
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        if (thirdLine != null) {
+            Text(
+                text = thirdLine,
+                style = cardStyle.subtitleStyle,
+                color = cardStyle.subtitleColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -246,9 +265,19 @@ private fun InstalledAppCard(
     }
 
     val version = remember(item) { item.version.withVersionPrefix() }
+    val context = LocalContext.current
+    // MT's app list prints the APK size after the version; the copy Morphe kept is
+    // the size at hand for a card, so it stands in for the install's size here
+    val sizeLabel = remember(item, context) {
+        item.savedApkFile
+            ?.takeIf { it.exists() }
+            ?.length()
+            ?.takeIf { it > 0 }
+            ?.let { Formatter.formatFileSize(context, it) }
+    }
     // What tells the app from a namesake leads the row, ahead of the version
-    val subtitle = remember(item) {
-        listOfNotNull(item.nameSuffix, version.ifEmpty { null }).joinToString(" • ")
+    val subtitle = remember(item, sizeLabel) {
+        listOfNotNull(item.nameSuffix, version.ifEmpty { null }, sizeLabel).joinToString(" • ")
     }
 
     // The version worth badging, out of the one the sources support: only when it is short enough
@@ -328,7 +357,7 @@ private fun InstalledAppCard(
         // App info
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             // App name
             Text(
@@ -427,6 +456,15 @@ private fun InstalledAppCard(
                     }
                 }
             }
+
+            // Third line, as MT's app list prints it: the package this install lives under
+            Text(
+                text = installedApp.currentPackageName,
+                style = cardStyle.subtitleStyle,
+                color = cardStyle.subtitleColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -469,6 +507,7 @@ private fun NotPatchedAppCard(
             displayName = item.displayName,
             subtitle = subtitle,
             gradientColors = item.gradientColors,
+            thirdLine = item.packageName
         )
     }
 }
@@ -571,7 +610,7 @@ fun AppLoadingCard(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 ShimmerLine(
                     height = titleRowHeight,
@@ -582,6 +621,11 @@ fun AppLoadingCard(
                     height = statusBadgeHeight,
                     widthFraction = 0.4f,
                     baseColor = skeletonColor.copy(alpha = 0.15f)
+                )
+                ShimmerLine(
+                    height = statusBadgeHeight,
+                    widthFraction = 0.55f,
+                    baseColor = skeletonColor.copy(alpha = 0.12f)
                 )
             }
         }

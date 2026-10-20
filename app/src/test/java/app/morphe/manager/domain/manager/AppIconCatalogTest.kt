@@ -68,8 +68,8 @@ class AppIconCatalogTest {
     }
 
     @Test
-    fun `the default icon comes first, as the one the manifest enables`() {
-        assertEquals(AppIcon.DEFAULT, AppIcon.entries.first())
-        assertEquals("app.morphe.manager.MainActivity_Default", AppIcon.DEFAULT.aliasName)
+    fun `slate is the default icon, the one the manifest enables`() {
+        assertEquals("app.morphe.manager.MainActivity_Dark_5", AppIcon.DARK_5.aliasName)
+        assertEquals(AppIcon.DARK_5, AppIcon.of(IconBackground.DARK_5, IconMark.WHITE))
     }
 }

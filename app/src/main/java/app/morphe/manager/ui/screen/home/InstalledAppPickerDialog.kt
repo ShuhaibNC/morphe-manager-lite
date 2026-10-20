@@ -13,6 +13,8 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import android.text.format.Formatter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import app.morphe.manager.R
@@ -154,9 +156,13 @@ fun InstalledAppPickerDialog(
                         )
                         CardHeadingText(
                             name = item.label,
-                            // Universal patches name no version, so nothing here checks the build
-                            // code and nothing would act on it
-                            description = "${item.packageName}\nv${item.info.version}",
+                            // MT's app list order: version and size over the package name.
+                            // Universal patches name no version, so nothing here checks the
+                            // build code and nothing would act on it
+                            description = listOf(
+                                "v${item.info.version}",
+                                Formatter.formatFileSize(LocalContext.current, item.sizeBytes)
+                            ).joinToString("  ") + "\n${item.packageName}",
                             modifier = Modifier.weight(1f)
                         )
                     }

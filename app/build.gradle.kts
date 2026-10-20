@@ -366,6 +366,8 @@ val launcherIconBackgrounds = listOf(
 val generateLauncherIcons = tasks.register<GenerateLauncherIconsTask>("generateLauncherIcons") {
     group = "build"
     description = "Generates the launcher icon aliases, adaptive icons and app catalog."
+    // Morphe Lite: the Slate icon (dark_5) is the default launcher icon.
+    defaultIcon.set("dark_5")
     marks.set(launcherIconMarks)
     backgrounds.set(launcherIconBackgrounds.map { (id, marks) -> listOf(id, marks.first) + marks.second })
     resDirectory.set(layout.buildDirectory.dir("generated/launcherIcons/res"))

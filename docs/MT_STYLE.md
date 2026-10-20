@@ -1,8 +1,12 @@
 # MT Manager UI style
 
 This fork follows the UI style of MT Manager, learned from screenshots of
-MT Manager 2.x (file list, drawer, overflow menu, Preferences). The rule in
-one line: **everything is a simple flat list.**
+MT Manager 2.x (file list, drawer, overflow menu, Preferences, Extract APK).
+The rule in one line: **everything is a simple flat list.**
+
+Defaults for this fork: color style **Monochrome**, background animation
+**None**, launcher icon **Slate** (`dark_5`, enabled by the icon generator
+instead of the first catalog entry).
 
 ## Palette (dark, the default look)
 
@@ -34,12 +38,15 @@ text, `#616161` secondary text, `#1976D2` accent.
 - Type is one plain sans, no letter spacing: screen title 20 sp, list
   title 16 sp, second line 13-14 sp in the secondary color. Nothing bold
   except where the component already was.
-- Lists are tight rows starting at the top of the screen: icon slot on the
-  left (48 dp in a flat dark square), title, small gray second line, and
-  2-4 dp between rows. No floating cards, no centered content blocks.
-- Settings look like MT's Preferences: a small blue section header
-  (`Startup`, `Appearance` style), then flat rows with a title and a
-  smaller gray description under it, blue switch on the right.
+- App lists (home, installed-apps picker) copy MT's Extract APK page:
+  paneled rows one step lighter than the page (`#383838` on `#2B2B2B`),
+  8 dp corners, about 10 dp between rows, 56 dp icon on the left, then
+  three lines - app name (20 sp), version and size, package name - the
+  last two in the secondary color.
+- Settings look like MT's Preferences: no group panels at all. A small
+  blue section header (`Startup`, `Appearance` style), then flat rows
+  with a title and a smaller gray description under it sitting directly
+  on the page background, blue switch on the right.
 - Menus are flat dark panels with an icon and a label per row.
 
 ## Where it is enforced
@@ -53,4 +60,12 @@ text, `#616161` secondary text, `#1976D2` accent.
 - `ui/screen/shared/AnimatedBackground.kt` - draws nothing.
 - `ui/screen/shared/PressFeedback.kt` - `pressScale` is a no-op.
 - `ui/screen/shared/ShimmerEffects.kt` - loading blocks are static.
-- `ui/screen/home/HomeAppCards.kt` - home rows: flat, 72 dp, 48 dp icon.
+- `ui/screen/home/HomeAppCards.kt` - home rows: MT app-list panels, 88 dp,
+  56 dp icon, name / version + size / package.
+- `ui/screen/shared/CompactListCard.kt` + `CardHeadingText.kt` - the same
+  panel rows for the pickers (installed apps, files, patches).
+- `ui/screen/shared/SettingComponents.kt` (`SettingsGroup`) - settings
+  groups render flat on the page, no panel.
+- `domain/manager/PreferencesManager.kt` - defaults: Monochrome style,
+  no background animation. `app/build.gradle.kts` +
+  `GenerateLauncherIconsTask` - Slate is the default launcher icon.

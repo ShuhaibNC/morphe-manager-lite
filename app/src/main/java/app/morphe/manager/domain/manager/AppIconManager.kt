@@ -24,7 +24,7 @@ class AppIconManager(private val context: Context) {
         return AppIcon.entries.firstOrNull { icon ->
             val state = packageManager.getComponentEnabledSetting(icon.componentName(context))
             state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-        } ?: AppIcon.DEFAULT
+        } ?: AppIcon.DARK_5 // Morphe Lite defaults to the Slate icon
     }
 
     /**

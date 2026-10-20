@@ -105,9 +105,9 @@ val WindowSize.contentPadding: Dp
  * Get recommended spacing between items based on window size
  */
 val WindowSize.itemSpacing: Dp
-    // MT style: lists are tight rows, not spaced-out cards.
+    // MT Extract APK style: paneled rows with a clear gap between them.
     get() = when (widthSizeClass) {
-        WindowWidthSizeClass.Compact -> 2.dp
-        WindowWidthSizeClass.Medium -> 4.dp
-        WindowWidthSizeClass.Expanded -> 4.dp
+        WindowWidthSizeClass.Compact -> 10.dp
+        WindowWidthSizeClass.Medium -> 12.dp
+        WindowWidthSizeClass.Expanded -> 12.dp
     }

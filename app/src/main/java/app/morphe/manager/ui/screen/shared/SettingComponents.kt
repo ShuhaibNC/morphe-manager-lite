@@ -604,9 +604,9 @@ fun SettingsGroup(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    SectionCard(modifier = modifier) {
-        Column(content = content)
-    }
+    // MT Preferences style: no group panel at all, the plain rows and their
+    // section titles sit directly on the page background.
+    Column(modifier = modifier, content = content)
 }
 
 /**

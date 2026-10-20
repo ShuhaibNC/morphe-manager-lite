@@ -7,6 +7,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
@@ -26,6 +27,10 @@ abstract class GenerateLauncherIconsTask : DefaultTask() {
     /** Background ids in picker order, each with its base mark and then its other marks. */
     @get:Input
     abstract val backgrounds: ListProperty<List<String>>
+
+    /** Background id whose base icon starts enabled, the default launcher icon. */
+    @get:Input
+    abstract val defaultIcon: Property<String>
 
     @get:OutputDirectory
     abstract val resDirectory: DirectoryProperty
@@ -76,14 +81,14 @@ abstract class GenerateLauncherIconsTask : DefaultTask() {
             appendLine("""    <uses-feature android:name="android.software.leanback" android:required="false" />""")
             appendLine("""    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />""")
             appendLine("""    <application tools:ignore="MissingTvBanner">""")
-            icons.forEachIndexed { index, icon ->
+            icons.forEach { icon ->
                 val suffix = suffix(icon)
-                // Only the first icon is on until the user picks another
+                // Only the default icon is on until the user picks another
                 appendLine(
                     """
                     |        <activity-alias
                     |            android:name="app.morphe.manager.MainActivity_${pascal(suffix)}"
-                    |            android:enabled="${index == 0}"
+                    |            android:enabled="${suffix == defaultIcon.get()}"
                     |            android:exported="true"
                     |            android:icon="@mipmap/ic_launcher_$suffix"
                     |            android:roundIcon="@mipmap/ic_launcher_$suffix"

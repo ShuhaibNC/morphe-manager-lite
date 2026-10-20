@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 
@@ -31,11 +30,11 @@ fun CardHeadingText(
     badges: @Composable RowScope.() -> Unit = {}
 ) {
     val secondaryColor = dialogSecondaryTextColor()
-    val nameStyle = MaterialTheme.typography.titleSmall
+    val nameStyle = MaterialTheme.typography.titleMedium
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         // The name keeps the whole width, and the badges follow it, dropping to a line of their
         // own only where they do not fit beside it
@@ -46,7 +45,6 @@ fun CardHeadingText(
             Text(
                 text = name,
                 style = nameStyle,
-                fontWeight = FontWeight.SemiBold,
                 color = if (dimmed) secondaryColor.copy(alpha = 0.5f) else dialogTextColor()
             )
             NameLineBadges(lineHeight = nameStyle.lineHeight, badges = badges)
@@ -55,7 +53,7 @@ fun CardHeadingText(
         if (!description.isNullOrBlank()) {
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = if (dimmed) secondaryColor.copy(alpha = 0.4f) else secondaryColor
             )
         }
