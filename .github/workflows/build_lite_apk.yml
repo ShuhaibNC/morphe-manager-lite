@@ -1,0 +1,44 @@
+name: Build Lite APK
+
+# Fork-only workflow for the morphe-manager-lite MT-style build.
+# Builds a release APK signed with the debug key (-PsignAsDebug), so no
+# keystore secret is needed on this fork. Installs beside the official app
+# as app.morphe.manager.lite.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - mt-simple-ui
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build APK (release, debug-signed)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          _JAVA_OPTIONS: "-Djava.awt.headless=true"
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleRelease -PsignAsDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: morphe-lite-apk
+          archive: false
+          path: app/build/outputs/apk/release/*.apk
