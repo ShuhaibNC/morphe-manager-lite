@@ -16,9 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.SportsEsports
-import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,15 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import app.morphe.manager.R
 import app.morphe.manager.patcher.logger.LogLevel
 import app.morphe.manager.patcher.logger.logField
@@ -76,11 +76,9 @@ import app.morphe.manager.patcher.worker.PatcherWorker.Companion.LOG_WORKER_PREF
 import app.morphe.manager.patcher.worker.PatcherWorker.Companion.LOG_WORKER_PREFIX_SUCCEEDED
 import app.morphe.manager.ui.model.PatchProgressSource
 import app.morphe.manager.ui.model.State
-import app.morphe.manager.ui.screen.patcher.game.MiniGameContent
-import app.morphe.manager.ui.screen.patcher.game.MiniGameState
 import app.morphe.manager.ui.screen.shared.*
 import app.morphe.manager.ui.screen.shared.Animations
-import app.morphe.manager.ui.theme.MorpheBrandTeal
+import app.morphe.manager.ui.theme.JetBrainsMono
 import app.morphe.manager.util.formatBytesForReport
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -382,7 +380,6 @@ fun ExpertPatchingInProgress(
     patchProgress: PatchProgressSource,
     packageName: String? = null,
     patcherSucceeded: Boolean? = null,
-    miniGameState: MiniGameState,
     queueHeader: (@Composable () -> Unit)? = null,
     onCancelClick: () -> Unit,
     resultButton: ResultButton = ResultButton.Install,
@@ -457,7 +454,6 @@ fun ExpertPatchingInProgress(
         ExpertLogPanel(
             patchProgress = patchProgress,
             listState = listState,
-            miniGameState = miniGameState,
             accentColor = appColor,
             modifier = panelModifier
         )
@@ -634,136 +630,82 @@ private fun ExpertProgressHeader(
             )
         }
 
-        // Heap, CPU and storage graphs
-        PatchingUsageGraphs(
-            patchProgress = patchProgress,
-            compact = !isLandscape(),
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }
 
-private const val LOG_PANEL_TAB_LOGS = 0
-private const val LOG_PANEL_TAB_GAMES = 1
+/**
+ * Terminal green of the log panel, the one color its plain entries are set in.
+ */
+private val TerminalGreen = Color(0xFF33FF66)
 
 /**
  * Scrollable log panel backed directly by [PatchProgressSource.logs].
- * Tabs over it switch between the logs and the mini-game, by a tap or a swipe.
+ *
+ * Morphe Lite: no tabs and no mini-games - the panel is only the log, drawn like
+ * a Linux terminal: JetBrains Mono, green text on a pure black background.
  */
 @Composable
 private fun ExpertLogPanel(
     modifier: Modifier = Modifier,
     patchProgress: PatchProgressSource,
     listState: LazyListState,
-    miniGameState: MiniGameState,
     accentColor: Color? = null
 ) {
     val logItems = patchProgress.logItems
-    // Decoration only: the log's own colors keep telling warnings and errors apart
-    val appAccent = usableAppAccent(accentColor)
-    val dotColor = appAccent ?: MorpheBrandTeal
-    val totalLogs = patchProgress.totalLogCount
-
-    var activeTab by rememberSaveable { mutableIntStateOf(LOG_PANEL_TAB_LOGS) }
-    LaunchedEffect(activeTab) {
-        if (activeTab != LOG_PANEL_TAB_GAMES) miniGameState.pauseActiveGame()
-    }
-    // Waits behind its pause overlay while the manager is away, rather than playing on the
-    // moment it is back, before the player has their eyes on it again
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { miniGameState.pauseActiveGame() }
-    // Lines there were when the logs were last in view, so the tab can say the run moved on
-    var seenLogCount by rememberSaveable { mutableIntStateOf(totalLogs) }
-    LaunchedEffect(activeTab, totalLogs) {
-        if (activeTab == LOG_PANEL_TAB_LOGS) seenLogCount = totalLogs
-    }
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(Defaults.CardCornerRadius),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        border = CardBorder.of(appAccentBorder(appAccent))
+        color = Color.Black,
+        tonalElevation = 0.dp,
+        border = CardBorder.of(MaterialTheme.colorScheme.outlineVariant)
     ) {
         // Handed to the log cards, which a queue renders without the screen's own accent around them
-        ProvideAccent(appAccent) {
-            SegmentedTabs(
-                options = listOf(
-                    SegmentedTab(
-                        label = stringResource(R.string.patcher_tab_logs),
-                        icon = Icons.Outlined.Terminal,
-                        badge = activeTab != LOG_PANEL_TAB_LOGS && totalLogs > seenLogCount
-                    ),
-                    SegmentedTab(
-                        label = stringResource(R.string.patcher_tab_game),
-                        icon = Icons.Outlined.SportsEsports
-                    )
-                ),
-                selectedIndex = activeTab,
-                onSelect = { activeTab = it },
-                spacing = 0.dp,
-                compact = true,
-                fillHeight = true,
-                selectorPadding = PaddingValues(
-                    start = PatcherCardPadding,
-                    top = PatcherCardPadding,
-                    end = PatcherCardPadding
-                ),
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                // A game in play takes the drags over it, the picker has none of its own
-                pageSwipeEnabled = { page -> page != LOG_PANEL_TAB_GAMES || !miniGameState.hasOpenGame },
-                modifier = Modifier.fillMaxSize()
-            ) { tab ->
-                when (tab) {
-                    LOG_PANEL_TAB_GAMES -> MiniGameContent(state = miniGameState)
-                    else -> {
-                        LazyColumn(
-                            state = listState,
+        ProvideAccent(usableAppAccent(accentColor)) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScrollFade(listState),
+                contentPadding = PaddingValues(vertical = PatcherCardMargin)
+            ) {
+                if (logItems.isEmpty()) {
+                    item {
+                        Box(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScrollFade(listState),
-                            contentPadding = PaddingValues(vertical = PatcherCardMargin)
+                                .fillMaxWidth()
+                                .padding(vertical = 48.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            if (logItems.isEmpty()) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 48.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                                        ) {
-                                            // Nothing is going to arrive for a run whose log died
-                                            // with its process, so the live dot would be a lie
-                                            if (!patchProgress.logsLost) {
-                                                LiveIndicatorDot(color = dotColor, size = 10.dp)
-                                            }
-                                            CrossfadeText(
-                                                text = stringResource(
-                                                    if (patchProgress.logsLost) R.string.patcher_logs_lost
-                                                    else R.string.patcher_logs_waiting
-                                                ),
-                                                style = MaterialTheme.typography.bodySmall
-                                                    .copy(fontFamily = FontFamily.Monospace),
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    .copy(alpha = 0.45f),
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                // Nothing is going to arrive for a run whose log died
+                                // with its process, so the live dot would be a lie
+                                if (!patchProgress.logsLost) {
+                                    LiveIndicatorDot(color = TerminalGreen, size = 10.dp)
                                 }
-                            }
-
-                            items(
-                                count = logItems.size,
-                                key = { index -> index }
-                            ) { index ->
-                                LogItemContent(logItems[index])
+                                CrossfadeText(
+                                    text = stringResource(
+                                        if (patchProgress.logsLost) R.string.patcher_logs_lost
+                                        else R.string.patcher_logs_waiting
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall
+                                        .copy(fontFamily = JetBrainsMono),
+                                    color = TerminalGreen.copy(alpha = 0.5f),
+                                    textAlign = TextAlign.Center
+                                )
                             }
                         }
                     }
+                }
+
+                items(
+                    count = logItems.size,
+                    key = { index -> index }
+                ) { index ->
+                    LogItemContent(logItems[index])
                 }
             }
         }
@@ -792,8 +734,12 @@ private fun PatcherInfoCard(
     title: String,
     variant: CardVariant,
     badge: String? = null,
+    // A collapsible card starts as just its header row and opens to its full
+    // height on tap, so a long field list stays out of the log's way
+    collapsible: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    var expanded by rememberSaveable { mutableStateOf(!collapsible) }
     // The start card wears the app's color on a neutral veil, the success one stays green
     val accentColor = when (variant) {
         CardVariant.Start   -> LocalAccent.current ?: MaterialTheme.colorScheme.primary
@@ -816,13 +762,20 @@ private fun PatcherInfoCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize()
                 .padding(PatcherCardPadding),
             // Tight, because these cards carry a lot of short fields and are read at a glance
             verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            // Header row: title + optional badge
+            // Header row: title + optional badge; on a collapsible card the whole
+            // row is the toggle, with the chevron saying which way it goes
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (collapsible) Modifier.clickable { expanded = !expanded }
+                        else Modifier
+                    ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -832,25 +785,40 @@ private fun PatcherInfoCard(
                     fontWeight = FontWeight.SemiBold,
                     color = accentColor
                 )
-                if (badge != null) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = accentColor.copy(alpha = 0.18f)
-                    ) {
-                        Text(
-                            text = badge,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = accentColor,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (badge != null) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = accentColor.copy(alpha = 0.18f)
+                        ) {
+                            Text(
+                                text = badge,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = accentColor,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    if (collapsible) {
+                        Icon(
+                            imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
 
-            HorizontalDivider(color = accentColor.copy(alpha = 0.15f), thickness = 1.dp)
+            if (expanded) {
+                HorizontalDivider(color = accentColor.copy(alpha = 0.15f), thickness = 1.dp)
 
-            content()
+                content()
+            }
         }
     }
 }
@@ -863,7 +831,8 @@ private fun PatcherInfoCard(
 private fun StartBannerCard(item: LogItem.StartBanner) {
     PatcherInfoCard(
         title = stringResource(R.string.patcher_card_started),
-        variant = CardVariant.Start
+        variant = CardVariant.Start,
+        collapsible = true
     ) {
         BannerFieldCell(
             label = stringResource(R.string.patcher_field_package),
@@ -1019,27 +988,6 @@ private fun SuccessSummaryCard(item: LogItem.SuccessSummary) {
                 modifier = Modifier.weight(1f))
         }
 
-        if (item.processHeapAverageMb != null) {
-            BannerFieldRow {
-                BannerFieldCell(
-                    label = stringResource(R.string.patcher_field_memory_average),
-                    value = item.processHeapAverageMb,
-                    modifier = Modifier.weight(1f))
-                BannerFieldCell(
-                    label = stringResource(R.string.patcher_field_memory_max),
-                    value = item.processHeapMaxMb ?: "?",
-                    modifier = Modifier.weight(1f))
-            }
-        }
-
-        if (item.ioPeakRate != null) {
-            BannerFieldRow {
-                BannerFieldCell(
-                    label = stringResource(R.string.patcher_field_io_peak),
-                    value = item.ioPeakRate,
-                    modifier = Modifier.weight(1f))
-            }
-        }
     }
 }
 
@@ -1072,13 +1020,13 @@ private fun BannerFieldCell(
             text = label.uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            fontSize = 9.sp, fontFamily = FontFamily.Monospace
+            fontSize = 9.sp, fontFamily = JetBrainsMono
         )
 
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = JetBrainsMono,
             fontWeight = FontWeight.Medium,
             color = valueColor ?: MaterialTheme.colorScheme.onSurface,
             fontSize = 11.sp,
@@ -1089,71 +1037,46 @@ private fun BannerFieldCell(
 }
 
 /**
- * Standard single-line log entry - level badge + monospace message.
+ * Single-line log entry, terminal style: a bracketed level letter and the
+ * message, both JetBrains Mono in terminal colors on the panel's black.
  */
 @Composable
 private fun LogEntryRow(level: LogLevel, message: String) {
-    val colors = logLevelColors(level)
+    val textColor = terminalLogColor(level)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (colors.rowBg != Color.Unspecified) Modifier.background(colors.rowBg) else Modifier)
-            .padding(horizontal = PatcherCardPadding, vertical = PatcherCardMargin),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(horizontal = 12.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Top
     ) {
-        Surface(shape = RoundedCornerShape(4.dp), color = colors.badgeBg) {
-            Text(
-                text = level.logBadge,
-                style = MaterialTheme.typography.labelSmall,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                color = colors.text,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                fontSize = 10.sp
-            )
-        }
+        Text(
+            text = "[${level.logBadge}]",
+            style = MaterialTheme.typography.bodySmall,
+            fontFamily = JetBrainsMono,
+            fontWeight = FontWeight.Bold,
+            color = textColor,
+            fontSize = 12.sp
+        )
 
         Text(
             text = message,
             style = MaterialTheme.typography.bodySmall,
-            fontFamily = FontFamily.Monospace,
-            color = colors.text.copy(alpha = 0.85f),
-            lineHeight = 17.sp,
+            fontFamily = JetBrainsMono,
+            color = textColor.copy(alpha = 0.9f),
+            lineHeight = 18.sp,
             fontSize = 12.sp
         )
     }
 }
 
-private data class LogEntryColors(val rowBg: Color, val badgeBg: Color, val text: Color)
-
-/**
- * Returns (rowBackground, badgeBackground, textColor) for a given [LogLevel].
- */
-@Composable
-private fun logLevelColors(level: LogLevel): LogEntryColors = when (level) {
-    LogLevel.ERROR -> LogEntryColors(
-        rowBg   = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
-        badgeBg = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f),
-        text    = MaterialTheme.colorScheme.error
-    )
-    LogLevel.WARN -> LogEntryColors(
-        rowBg   = SemanticTone.Warning.container.copy(alpha = 0.12f),
-        badgeBg = SemanticTone.Warning.container.copy(alpha = 0.5f),
-        text    = SemanticTone.Warning.accent
-    )
-    // The most common level, so its badge stays neutral rather than coloring the whole log
-    LogLevel.INFO -> LogEntryColors(
-        rowBg   = Color.Unspecified,
-        badgeBg = neutralVeil(),
-        text    = MaterialTheme.colorScheme.onSurface
-    )
-    LogLevel.TRACE -> LogEntryColors(
-        rowBg   = Color.Unspecified,
-        badgeBg = MaterialTheme.colorScheme.surfaceVariant,
-        text    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-    )
+/** Log colors the way a terminal prints them: green text, amber warnings, red errors. */
+private fun terminalLogColor(level: LogLevel): Color = when (level) {
+    LogLevel.INFO -> TerminalGreen
+    LogLevel.TRACE -> TerminalGreen.copy(alpha = 0.55f)
+    LogLevel.WARN -> Color(0xFFFFB300)
+    LogLevel.ERROR -> Color(0xFFFF5252)
 }
 
 private val LogLevel.logBadge: String

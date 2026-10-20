@@ -48,6 +48,11 @@ text, `#616161` secondary text, `#1976D2` accent.
   with a title and a smaller gray description under it sitting directly
   on the page background, blue switch on the right.
 - Menus are flat dark panels with an icon and a label per row.
+- The patching screen is only progress + log: no mini-games, no tab bar,
+  no memory / CPU / storage-IO usage displays. The log is a Linux
+  terminal - JetBrains Mono (bundled, `res/font`), green text on pure
+  black; warnings amber, errors red. The run-info card (version, APK
+  size, patches, sources) starts collapsed and expands on tap.
 
 ## Where it is enforced
 

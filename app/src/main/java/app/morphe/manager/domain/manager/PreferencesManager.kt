@@ -206,19 +206,6 @@ class PreferencesManager(
     /** Tracks whether the user has explicitly toggled the custom file picker preference. */
     val customFilePickerUserConfigured = booleanPreference("custom_file_picker_user_configured", false)
 
-    // Mini-game high scores
-    val miniGame2048HighScore   = intPreference("mini_game_2048_high_score", 0)
-    val miniGameFlappyHighScore = intPreference("mini_game_flappy_high_score", 0)
-    val miniGameSnakeHighScore  = intPreference("mini_game_snake_high_score", 0)
-    val miniGameDinoHighScore   = intPreference("mini_game_dino_high_score", 0)
-    val miniGameBlocksHighScore = intPreference("mini_game_blocks_high_score", 0)
-    val miniGameBricksHighScore = intPreference("mini_game_bricks_high_score", 0)
-    val miniGameMinerHighScore  = intPreference("mini_game_miner_high_score", 0)
-    val miniGamePairsHighScore  = intPreference("mini_game_pairs_high_score", 0)
-
-    /** Set once the user has found the way back to a mini-game, which retires the hint for it. */
-    val backToGameHintSeen = booleanPreference("back_to_game_hint_seen", false)
-
     /**  Hidden preference to track if prerelease was auto-enabled. */
     private val prereleaseAutoEnabled = booleanPreference("prerelease_auto_enabled", false)
 

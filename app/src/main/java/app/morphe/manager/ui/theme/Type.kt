@@ -12,9 +12,20 @@ package app.morphe.manager.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import app.morphe.manager.R
+
+/**
+ * JetBrains Mono, bundled in res/font. The patch log is set in it, terminal style.
+ */
+val JetBrainsMono = FontFamily(
+    Font(R.font.jetbrains_mono_regular, FontWeight.Normal),
+    Font(R.font.jetbrains_mono_medium, FontWeight.Medium),
+    Font(R.font.jetbrains_mono_bold, FontWeight.Bold)
+)
 
 /**
  * MT Manager style type scale: one plain sans, no letter spacing, no bold
