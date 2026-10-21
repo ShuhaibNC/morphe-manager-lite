@@ -78,7 +78,7 @@ class PreferencesManager(
 
     /** Whether cards, panels and buttons draw the hairline edge around them. */
     val outlines = booleanPreference("outlines", true)
-    val showGreetingPhrases = booleanPreference("show_greeting_phrases", true)
+    val showGreetingPhrases = booleanPreference("show_greeting_phrases", false)
 
     /** The per-app badges carry the same news, so the banner is worth turning off. */
     val showRepatchNotice = booleanPreference("show_repatch_notice", true)
@@ -124,7 +124,7 @@ class PreferencesManager(
 
     val useExpertMode = booleanPreference("use_expert_mode", false)
 
-    val stripUnusedNativeLibs = booleanPreference("strip_unused_native_libs", false)
+    val stripUnusedNativeLibs = booleanPreference("strip_unused_native_libs", true)
 
     // System tab
     val installerPrimary = stringPreference("installer_primary", InstallerPreferenceTokens.INTERNAL)

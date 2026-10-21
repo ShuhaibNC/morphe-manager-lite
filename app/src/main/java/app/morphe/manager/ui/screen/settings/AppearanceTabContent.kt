@@ -20,7 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -32,12 +31,10 @@ import app.morphe.manager.R
 import app.morphe.manager.domain.manager.HomeAppButtonPreferences
 import app.morphe.manager.ui.screen.settings.appearance.*
 import app.morphe.manager.ui.screen.shared.*
-import app.morphe.manager.ui.theme.SeasonalEvent
 import app.morphe.manager.ui.theme.Theme
 import app.morphe.manager.ui.theme.ThemeStyle
 import app.morphe.manager.ui.theme.resolveThemeStyle
 import app.morphe.manager.ui.theme.toUiScalePercent
-import app.morphe.manager.ui.viewmodel.RandomInterval
 import app.morphe.manager.ui.viewmodel.ThemeSettingsViewModel
 import app.morphe.manager.util.AppCardColorDefaults
 import app.morphe.manager.util.AppCardColorMode
@@ -76,14 +73,6 @@ fun AppearanceTabContent(
     val customAppCardColors by themeViewModel.prefs.customAppCardColors.getAsState()
     val showAppGroupingSwitcher by homeAppButtonPrefs.showCategoryViewSwitcher.collectAsStateWithLifecycle()
     val showSortButton by homeAppButtonPrefs.showSortButton.collectAsStateWithLifecycle()
-    val backgroundType by themeViewModel.prefs.backgroundType.getAsState()
-    val enableParallax by themeViewModel.prefs.enableBackgroundParallax.getAsState()
-    val randomInterval by themeViewModel.prefs.randomBackgroundInterval.getAsState()
-    val matrixUnlocked by themeViewModel.prefs.matrixBackgroundUnlocked.getAsState()
-    val seasonalThemes by themeViewModel.prefs.seasonalThemes.getAsState()
-    val seasonalEvent = remember { SeasonalEvent.on() }
-    val resolvedRandomBackground =
-        if (backgroundType == BackgroundType.RANDOM) rememberRandomBackground(themeViewModel.prefs) else null
     val effectiveThemeStyle = resolveThemeStyle(themeStyle, supportsDynamicColor)
     val showAppCardColorSetting = effectiveThemeStyle != ThemeStyle.MONOCHROME
 
@@ -93,7 +82,6 @@ fun AppearanceTabContent(
     val showUiScaleDialog = remember { mutableStateOf(false) }
     val showTranslationInfoDialog = remember { mutableStateOf(false) }
     val showAppCardColorDialog = remember { mutableStateOf(false) }
-    val showBackgroundDialog = remember { mutableStateOf(false) }
     val appCardColorValues = remember(customAppCardColors) {
         AppCardColorDefaults.decodeColorValues(customAppCardColors)
     }
@@ -137,19 +125,13 @@ fun AppearanceTabContent(
             onColorAccentsToggle = { themeViewModel.toggleColorAccents(colorAccents) },
             outlines = outlines,
             onOutlinesToggle = { themeViewModel.toggleOutlines(outlines) },
-            backgroundType = backgroundType,
-            randomInterval = randomInterval,
-            onBackgroundClick = { showBackgroundDialog.value = true },
             onSelectorPositioned = onThemeSelectorPositioned,
             onSelectorScrollTarget = onThemeSelectorScrollTarget
         )
 
         ColorsSection(
-            themeStyle = effectiveThemeStyle,
-            accentColorHex = customAccentColorHex,
             appCardColorMode = appCardColorMode,
             showAppCardColors = showAppCardColorSetting,
-            onAccentSelected = themeViewModel::setCustomAccentColor,
             onAppCardColorsClick = { showAppCardColorDialog.value = true }
         )
 
@@ -162,23 +144,6 @@ fun AppearanceTabContent(
             onRepatchNoticeToggle = { themeViewModel.toggleShowRepatchNotice(showRepatchNotice) },
             onSortButtonToggle = { homeAppButtonPrefs.setShowSortButton(!showSortButton) },
             onAppGroupingToggle = { homeAppButtonPrefs.setShowCategoryViewSwitcher(!showAppGroupingSwitcher) }
-        )
-    }
-
-    if (showBackgroundDialog.value) {
-        BackgroundPickerDialog(
-            selectedBackground = backgroundType,
-            onBackgroundSelected = themeViewModel::setBackgroundType,
-            selectedInterval = randomInterval,
-            onIntervalSelected = themeViewModel::setRandomInterval,
-            onDismiss = { showBackgroundDialog.value = false },
-            resolvedRandomBackground = resolvedRandomBackground,
-            enableParallax = enableParallax,
-            onParallaxToggle = { themeViewModel.toggleBackgroundParallax(enableParallax) },
-            seasonalThemes = seasonalThemes,
-            seasonalEvent = seasonalEvent,
-            onSeasonalThemesToggle = { themeViewModel.toggleSeasonalThemes(seasonalThemes) },
-            matrixUnlocked = matrixUnlocked
         )
     }
 
@@ -327,9 +292,6 @@ private fun ThemeSection(
     onColorAccentsToggle: () -> Unit,
     outlines: Boolean,
     onOutlinesToggle: () -> Unit,
-    backgroundType: BackgroundType,
-    randomInterval: RandomInterval,
-    onBackgroundClick: () -> Unit,
     onSelectorPositioned: ((Rect) -> Unit)?,
     onSelectorScrollTarget: ((Int) -> Unit)?
 ) {
@@ -405,68 +367,35 @@ private fun ThemeSection(
 
         SettingsDivider()
 
-        BackgroundSettingsItem(
-            selectedBackground = backgroundType,
-            selectedInterval = randomInterval,
-            onClick = onBackgroundClick
-        )
-
-        SettingsDivider()
-
         AppIconSettingsItem()
     }
 }
 
 /**
- * Accent color and home app card colors, both driven by the active theme style.
+ * Home app card colors. Morphe Lite has no accent-color option: the theme
+ * accent is fixed, so this section only remains where card colors apply.
  */
 @Composable
 private fun ColorsSection(
-    themeStyle: ThemeStyle,
-    accentColorHex: String?,
     appCardColorMode: AppCardColorMode,
     showAppCardColors: Boolean,
-    onAccentSelected: (Color?) -> Unit,
     onAppCardColorsClick: () -> Unit
 ) {
+    // Monochrome leaves app cards colorless, so there is nothing to set
+    if (!showAppCardColors) return
+
     SectionTitle(
         text = stringResource(R.string.settings_appearance_colors),
         icon = Icons.Outlined.ColorLens
     )
 
-    // Dynamic color derives the accent from the wallpaper, leaving nothing to pick here
-    val showAccent = themeStyle != ThemeStyle.MATERIAL_YOU
-
-    // Monochrome leaves app cards colorless and `Material You` has no accent to pick, and no style
-    // is both, so the group always has at least one of the two
     SettingsGroup {
-        AnimatedVisibility(
-            visible = showAccent,
-            enter = Animations.expandFadeEnter,
-            exit = Animations.shrinkFadeExit
-        ) {
-            AccentColorSelector(
-                selectedColorHex = accentColorHex,
-                onColorSelected = onAccentSelected,
-                dynamicColorEnabled = !showAccent
-            )
-        }
-
-        AnimatedVisibility(
-            visible = showAppCardColors,
-            enter = Animations.expandFadeEnter,
-            exit = Animations.shrinkFadeExit
-        ) {
-            Column {
-                if (showAccent) SettingsDivider()
-                SettingsItem(
-                    onClick = onAppCardColorsClick,
-                    title = stringResource(R.string.settings_appearance_app_card_colors),
-                    subtitle = stringResource(appCardColorMode.descriptionResId),
-                    leadingContent = { ThemedIcon(icon = Icons.Outlined.Style) }
-                )
-            }
-        }
+        SettingsItem(
+            onClick = onAppCardColorsClick,
+            title = stringResource(R.string.settings_appearance_app_card_colors),
+            subtitle = stringResource(appCardColorMode.descriptionResId),
+            leadingContent = { ThemedIcon(icon = Icons.Outlined.Style) }
+        )
     }
 }
 

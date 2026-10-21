@@ -74,3 +74,16 @@ text, `#616161` secondary text, `#1976D2` accent.
 - `domain/manager/PreferencesManager.kt` - defaults: Monochrome style,
   no background animation. `app/build.gradle.kts` +
   `GenerateLauncherIconsTask` - Slate is the default launcher icon.
+
+## Round 4 (Shuhaib, 2026-10-21)
+
+- Defaults: "Optimize for device architecture" (strip unused native libs) ON,
+  "Greeting Phrases" OFF. Both apply where the preference was never changed.
+- Settings no longer offers an accent color or a background animation: the
+  AccentColorSelector, BackgroundSettingsItem and BackgroundPickerDialog are
+  deleted with their settings entries. The Appearance "Colors" section keeps
+  only the app-card-colors entry, where that setting applies.
+- The patching log canvas spans 100% of the screen width: portrait headers
+  keep the normal inset while the panel runs edge to edge; in landscape the
+  panel runs to the right edge. The terminal surface is square-cornered with
+  no border, like a real terminal window.

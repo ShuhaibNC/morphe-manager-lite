@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ExpandLess
@@ -470,16 +471,17 @@ fun ExpertPatchingInProgress(
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = windowSize.contentPadding),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(windowSize.contentPadding),
                 verticalAlignment = Alignment.Top
             ) {
-                // Left column: header + action bar
+                // Left column: header + action bar, inset from the left edge only -
+                // the log canvas beside it spans the rest of the width
                 Column(
                     modifier = Modifier
                         .weight(0.42f)
                         .fillMaxHeight()
+                        .padding(start = windowSize.contentPadding)
                 ) {
                     // The usage graphs can outgrow a short window, so the header scrolls while
                     // the action bar below it stays put
@@ -514,15 +516,20 @@ fun ExpertPatchingInProgress(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = windowSize.contentPadding)
                     // Only enough to clear the status bar: the screen starts at the very top and
                     // a queue header brings padding of its own
                     .padding(top = Defaults.ContentPaddingSmall),
                 verticalArrangement = Arrangement.spacedBy(windowSize.itemSpacing)
             ) {
-                queueHeader?.invoke()
+                // Header keeps the screen inset; the log canvas below it is full width
+                Column(
+                    modifier = Modifier.padding(horizontal = windowSize.contentPadding),
+                    verticalArrangement = Arrangement.spacedBy(windowSize.itemSpacing)
+                ) {
+                    queueHeader?.invoke()
 
-                header()
+                    header()
+                }
 
                 logPanel(
                     Modifier
@@ -655,10 +662,9 @@ private fun ExpertLogPanel(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(Defaults.CardCornerRadius),
+        shape = RectangleShape,
         color = Color.Black,
-        tonalElevation = 0.dp,
-        border = CardBorder.of(MaterialTheme.colorScheme.outlineVariant)
+        tonalElevation = 0.dp
     ) {
         // Handed to the log cards, which a queue renders without the screen's own accent around them
         ProvideAccent(usableAppAccent(accentColor)) {
