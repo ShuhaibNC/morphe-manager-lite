@@ -17,12 +17,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,6 +41,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import app.morphe.manager.R
 import app.morphe.manager.patcher.logger.LogLevel
@@ -658,6 +663,59 @@ private fun ExpertLogPanel(
     listState: LazyListState,
     accentColor: Color? = null
 ) {
+    var fullscreen by remember { mutableStateOf(false) }
+
+    LogCanvas(
+        modifier = modifier,
+        patchProgress = patchProgress,
+        listState = listState,
+        accentColor = accentColor,
+        fullscreen = false,
+        onToggleFullscreen = { fullscreen = true }
+    )
+
+    if (fullscreen) {
+        // The fullscreen canvas scrolls itself: it starts at the tail and keeps
+        // following it while the user stays at the bottom, like the inline one
+        val fullscreenListState = rememberLazyListState()
+        LaunchedEffect(Unit) {
+            val lastIndex = (patchProgress.logItems.size - 1).coerceAtLeast(0)
+            fullscreenListState.scrollToItem(lastIndex)
+            snapshotFlow { patchProgress.totalLogCount }.collect { count ->
+                if (!fullscreenListState.canScrollForward) {
+                    fullscreenListState.animateScrollToItem((count - 1).coerceAtLeast(0))
+                }
+            }
+        }
+        Dialog(
+            onDismissRequest = { fullscreen = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            LogCanvas(
+                modifier = Modifier.fillMaxSize(),
+                patchProgress = patchProgress,
+                listState = fullscreenListState,
+                accentColor = accentColor,
+                fullscreen = true,
+                onToggleFullscreen = { fullscreen = false }
+            )
+        }
+    }
+}
+
+/**
+ * The black terminal canvas itself, inline or fullscreen: the log list with a
+ * fullscreen toggle overlaid at the top right corner.
+ */
+@Composable
+private fun LogCanvas(
+    modifier: Modifier = Modifier,
+    patchProgress: PatchProgressSource,
+    listState: LazyListState,
+    accentColor: Color? = null,
+    fullscreen: Boolean,
+    onToggleFullscreen: () -> Unit
+) {
     val logItems = patchProgress.logItems
 
     Surface(
@@ -666,53 +724,74 @@ private fun ExpertLogPanel(
         color = Color.Black,
         tonalElevation = 0.dp
     ) {
-        // Handed to the log cards, which a queue renders without the screen's own accent around them
-        ProvideAccent(usableAppAccent(accentColor)) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScrollFade(listState),
-                contentPadding = PaddingValues(vertical = PatcherCardMargin)
-            ) {
-                if (logItems.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 48.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
+        Box(Modifier.fillMaxSize()) {
+            // Handed to the log cards, which a queue renders without the screen's own accent around them
+            ProvideAccent(usableAppAccent(accentColor)) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScrollFade(listState),
+                    // Extra top space so the first lines clear the corner toggle
+                    contentPadding = PaddingValues(top = 40.dp, bottom = PatcherCardMargin)
+                ) {
+                    if (logItems.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                // Nothing is going to arrive for a run whose log died
-                                // with its process, so the live dot would be a lie
-                                if (!patchProgress.logsLost) {
-                                    LiveIndicatorDot(color = TerminalGreen, size = 10.dp)
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    // Nothing is going to arrive for a run whose log died
+                                    // with its process, so the live dot would be a lie
+                                    if (!patchProgress.logsLost) {
+                                        LiveIndicatorDot(color = TerminalGreen, size = 10.dp)
+                                    }
+                                    CrossfadeText(
+                                        text = stringResource(
+                                            if (patchProgress.logsLost) R.string.patcher_logs_lost
+                                            else R.string.patcher_logs_waiting
+                                        ),
+                                        style = MaterialTheme.typography.bodySmall
+                                            .copy(fontFamily = JetBrainsMono),
+                                        color = TerminalGreen.copy(alpha = 0.5f),
+                                        textAlign = TextAlign.Center
+                                    )
                                 }
-                                CrossfadeText(
-                                    text = stringResource(
-                                        if (patchProgress.logsLost) R.string.patcher_logs_lost
-                                        else R.string.patcher_logs_waiting
-                                    ),
-                                    style = MaterialTheme.typography.bodySmall
-                                        .copy(fontFamily = JetBrainsMono),
-                                    color = TerminalGreen.copy(alpha = 0.5f),
-                                    textAlign = TextAlign.Center
-                                )
                             }
                         }
                     }
-                }
 
-                items(
-                    count = logItems.size,
-                    key = { index -> index }
-                ) { index ->
-                    LogItemContent(logItems[index])
+                    items(
+                        count = logItems.size,
+                        key = { index -> index }
+                    ) { index ->
+                        LogItemContent(logItems[index])
+                    }
                 }
+            }
+
+            IconButton(
+                onClick = onToggleFullscreen,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+                    .size(32.dp)
+            ) {
+                Icon(
+                    imageVector = if (fullscreen) Icons.Filled.FullscreenExit else Icons.Filled.Fullscreen,
+                    contentDescription = stringResource(
+                        if (fullscreen) R.string.patcher_log_exit_fullscreen
+                        else R.string.patcher_log_fullscreen
+                    ),
+                    tint = TerminalGreen,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

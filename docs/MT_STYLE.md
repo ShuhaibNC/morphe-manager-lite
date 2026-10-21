@@ -87,3 +87,7 @@ text, `#616161` secondary text, `#1976D2` accent.
   keep the normal inset while the panel runs edge to edge; in landscape the
   panel runs to the right edge. The terminal surface is square-cornered with
   no border, like a real terminal window.
+- The log canvas has a fullscreen toggle at its top right corner: it opens
+  the terminal over the whole screen (own scroll state, starts at the tail
+  and keeps following it), and the same corner button or the back press
+  returns to the inline canvas.
